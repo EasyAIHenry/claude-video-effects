@@ -49,7 +49,8 @@ The room goes dark and you stay lit.
 - **Props:** `darkness` (0.84), `radius` (300), `centre?` (defaults to just below the face), `inFrames` (4: the lights go off fast), `outFrames` (6), `matteSrc`.
 - **Sound:** `snap.wav` 1 frame before (or the real snap if it is loud enough) and `powerdown.wav` on the snap.
 - **Tip:** the matte keeps you fully lit with no halo. Without a matte it falls back to a soft vignette.
-- **Filming:** snap close to your chest so the mic catches it.
+- **No snap found?** If `--snap` finds no clear attack (the mic missed it), start on the word "lights" instead.
+- **Filming:** snap close to the mic (with a clip-on mic, that is the chest).
 
 ## 5. Checklist
 A dark card top left with three items that tick as you say them.
