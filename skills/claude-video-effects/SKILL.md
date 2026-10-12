@@ -7,7 +7,7 @@ description: Edit a talking-head video with seven effects in Remotion - Headline
 
 You edit the user's talking-head takes into a vertical reel (1080x1920, 30 fps) with seven effects. Everything runs locally: ffmpeg, whisper.cpp, Apple Vision (macOS) and Remotion.
 
-The project is the repo https://github.com/EasyAIHenry/claude-video-effects. If the current folder is not that project (no `src/effects/cards.tsx`), clone it into a new folder next to the user's clips, then `npm install`.
+The project is the repo https://github.com/EasyAIHenry/claude-video-effects. If the current folder is not that project (no `src/effects/cards.tsx`), look for it in a `claude-video-effects/` subfolder first. If it is not there, clone it (into the current folder itself with `git clone <url> .` when the folder is empty), then `npm install`. Prerequisites: Node.js 18+, git, ffmpeg, whisper.cpp with a ggml model (default path `~/whisper.cpp/models/ggml-medium.en.bin`, or set `WHISPER_MODEL`), Python 3 with numpy, and on macOS the Xcode Command Line Tools for `swiftc`.
 
 Effect details, props and the line that triggers each one: `references/effects.md` (in this skill folder). Read it before step 6.
 
@@ -58,7 +58,7 @@ mkdir -p tools/bin && swiftc -O tools/vision/hands.swift -o tools/bin/hands
 tools/bin/hands public/talk.mp4 <line_start_s> <line_length_s> work/hands.jsonl
 python3 tools/palm_track.py work/hands.jsonl
 ```
-Not on a Mac: skip the matte (set `matte: undefined` in `cut.ts`). The effects still work: Headline Wall keeps cards off the head, Orbit fakes the behind pass, Spotlight uses a soft vignette.
+Not on a Mac: skip the matte and the hand track (set `matte: undefined` in `cut.ts`). There are no face boxes either, so render one still per line (`npx remotion still ... --frame=<line middle>`), read it, and estimate the face centre and size yourself. The effects still work: Headline Wall keeps cards off the head, Orbit fakes the behind pass, Spotlight uses a soft vignette, the palm prop sits at one fixed point you choose. HLG conversion needs macOS (VideoToolbox), so ask the user to film with HDR video turned off.
 
 ### 6. Place the effects
 Write `src/reel/plan.ts`: one entry per effect with `at` and `to` in seconds from `words.ts`, the `face` from `face_centres.py`, a label if the user wants the "#1 ..." pills, and the props from `references/effects.md`. Ask the user for images where an effect needs them (headline screenshots for the Headline Wall, reel thumbnails for the Orbit, a prop PNG for the palm) and put them in `public/`. Then type-check and look:
