@@ -54,6 +54,28 @@ Then:
 3. Tell Claude: "Use the claude-video-effects skill on my clips in clips/. Here's my script: ..." and say which line gets which effect.
 4. Review the stills it shows you, ask for changes, and let it render.
 
+### The two prompts from the guide
+
+Setup, in an empty folder in Claude Code (the Code tab of the Claude desktop app):
+
+```
+Set up github.com/EasyAIHenry/claude-video-effects inside this folder itself, not in a subfolder, and run npm install. Install whatever is missing: Node.js 18 or newer, git, ffmpeg, whisper.cpp with the medium English model saved in ~/whisper.cpp/models/, numpy for Python, and on a Mac the Xcode command line tools. Copy skills/claude-video-effects into ~/.claude/skills. Then open the Remotion Studio so I can see the demo.
+```
+
+The edit, after your takes are in `clips/`:
+
+```
+Use the claude-video-effects skill. My takes are in clips/. Here is my script, one effect per line:
+
+1. Everyone's talking about AI video, so here are 7 effects Claude made for me. (Headline Wall, starts on "talking")
+2. It can spin my reels around my head. That's the orbit. (Orbit, starts on "spin")
+3. ...
+
+Pick the best take of each line and show me a still of every effect before you render.
+```
+
+Effect names: Headline Wall, Orbit, Digital Zoom, Spotlight, Checklist, Freeze and Label, Before and After, Palm Prop.
+
 The skill file (`skills/claude-video-effects/SKILL.md`) has the whole workflow, and `references/effects.md` has the props, the line to say for each effect and filming tips.
 
 ## How the pipeline works
