@@ -74,8 +74,8 @@ More in `tools/README.md`.
 ## Requirements
 
 - Node.js 18 or newer
-- ffmpeg (with libvpx for the matte, libx264 for the cut)
-- [whisper.cpp](https://github.com/ggml-org/whisper.cpp) (`whisper-cli` on your PATH) and a model, e.g. `ggml-medium.en.bin`. Point `WHISPER_MODEL` at it.
+- ffmpeg (with libvpx for the matte, libx264 for the cut). On a Mac: `brew install ffmpeg`
+- [whisper.cpp](https://github.com/ggml-org/whisper.cpp) (`whisper-cli` on your PATH) and a model, e.g. `ggml-medium.en.bin`. On a Mac: `brew install whisper-cpp`, then download the model with the script in the whisper.cpp repo (`models/download-ggml-model.sh medium.en`). Point `WHISPER_MODEL` at it.
 - Python 3 with numpy
 - macOS 12 or newer with Xcode command line tools for the matte and hand tracking (`swiftc`). The effects still run without them, with a fallback for each.
 - Claude Code, if you want Claude to do the edit for you
@@ -94,4 +94,8 @@ public/                        generated media and your images (not committed)
 
 ## Licence
 
-MIT. See [LICENSE](LICENSE). Fonts load from Google Fonts through `@remotion/google-fonts`.
+The code in this repo is MIT. See [LICENSE](LICENSE).
+
+Remotion itself has its own licence: it is free for individuals, companies with up to 3 employees and non-profits, and larger companies need a company licence. Check [remotion.dev/license](https://www.remotion.dev/license) before you use it for a business.
+
+Fonts load from Google Fonts through `@remotion/google-fonts`.
