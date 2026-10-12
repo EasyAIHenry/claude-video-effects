@@ -29,4 +29,4 @@ for ln in cut["lines"]:
         print(f"{ln['id']}: no face found")
         continue
     x, y, h = st.median(s[0] for s in sel), st.median(s[1] for s in sel), st.median(s[2] for s in sel)
-    print(f"{ln['id']} ({ln['fx']}): face: {{ x: {round(x)}, y: {round(y)} }}, faceRadius (Orbit): {round(h * 0.55)}  // face box height {round(h)} px")
+    print(f"{ln['id']} ({ln['fx']}): face: {{ x: {round(x)}, y: {round(y)} }}  // face box height {round(h)} px; if it is over 300, raise the Orbit radius and tilt")
