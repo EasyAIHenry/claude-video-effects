@@ -1,0 +1,24 @@
+{
+  "name": "claude-video-effects",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Seven talking-head video effects in Remotion, plus a Claude Code skill that edits your takes with them.",
+  "license": "MIT",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts MyReel out/reel.mp4",
+    "demo": "remotion render src/index.ts AllEffects out/all-effects.mp4",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.440",
+    "@remotion/google-fonts": "4.0.440",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.440"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.7",
+    "typescript": "5.9.3"
+  }
+}

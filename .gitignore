@@ -1,0 +1,11 @@
+node_modules/
+out/
+work/
+.DS_Store
+# your footage and generated files stay local
+clips/*
+!clips/README.md
+public/*
+!public/README.md
+tools/bin/
+*.log
