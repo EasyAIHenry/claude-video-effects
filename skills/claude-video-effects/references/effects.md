@@ -3,7 +3,7 @@
 Every effect lives in `src/effects/` and is placed from `src/reel/plan.ts`:
 
 ```ts
-{ fx: 'Orbit', at: 4.52, to: 8.10, label: '#2 Orbit', face: { x: 600, y: 790 }, props: { faceRadius: 160 } }
+{ fx: 'Orbit', at: 7.07, to: 10.69, label: '#2 Orbit', face: { x: 610, y: 890 }, props: { radius: 430, tilt: 430 } }
 ```
 
 - `at` / `to`: seconds on the reel timeline (same clock as `words.ts`). `at` = trigger word start minus about 0.07 s. `to` = end of the line, or the next line's start for a hard cut.
