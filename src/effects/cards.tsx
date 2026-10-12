@@ -141,17 +141,24 @@ export type OrbitProps = EffectBase & {
   count?: number;
   /** Transparent person matte of the same clip (webm with alpha, same timing). Without it the behind pass is faked. */
   matteSrc?: string;
-  /** Orbit radius in px (x), and vertical tilt of the ring in px. */
+  /** Half-width of the ring in px. */
   radius?: number;
+  /** How far the ring tips toward the camera, in px. With tilt about equal to radius the ring looks tipped by ~45 degrees:
+   *  the back half rides above the hair, the front half sweeps low across the chest. */
   tilt?: number;
   /** Turns per second. */
   speed?: number;
-  /** Orbit centre height relative to the face (px, + = lower). */
+  /** Ring centre relative to the face centre (px, + = lower). */
   ringOffset?: number;
-  /** Rough radius of the face in px. Front cards fade out while they overlap this circle, so nothing covers the face. */
-  faceRadius?: number;
+  /** Card width in px (cards are 9:16). */
+  cardWidth?: number;
 };
 
+/**
+ * #2 Orbit (v3): a tilted ring of cards around the head. The back half rides above the hair and passes behind the head
+ * (the matte covers it); the front half sweeps low across the chest. The geometry keeps every card off the face, so no
+ * card fades out mid-path. Put the captions for this line low (below the ring): MyReel does that for Orbit lines.
+ */
 const OrbitBody: React.FC<OrbitProps> = ({
   src,
   trimBefore,
@@ -160,40 +167,28 @@ const OrbitBody: React.FC<OrbitProps> = ({
   images = [],
   count,
   matteSrc,
-  radius = 380,
-  tilt = 250,
-  speed = 0.22,
-  ringOffset = 60,
-  faceRadius = 150,
+  radius = 430,
+  tilt = 430,
+  speed = 0.3,
+  ringOffset = -30,
+  cardWidth = 165,
 }) => {
   const f = useCurrentFrame();
-  const n = count ?? (images.length || 6);
+  const n = count ?? (images.length || 7);
   const grow = interpolate(f, [0, 14], [0, 1], { ...CL, easing: POP });
-  const out = interpolate(f, [duration - 12, duration], [1, 0], { ...CL, easing: EASE });
+  const out = interpolate(f, [duration - 6, duration], [1, 0], CL);
   const cards = Array.from({ length: n }, (_, i) => {
     const a = (i / n) * Math.PI * 2 + (f / 30) * speed * Math.PI * 2;
-    const z = Math.sin(a); // +1 = nearest the camera
+    const z = Math.sin(a); // +1 = nearest the camera (low, on the chest), -1 = far side (high, behind the head)
     const x = face.x + Math.cos(a) * radius * grow;
     const y = face.y + ringOffset + z * tilt * grow;
-    const depth = (z + 1) / 2; // 0 back .. 1 front
-    const s = (0.62 + 0.38 * depth) * (0.4 + 0.6 * grow);
-    return { i, x, y, z, s, depth, rotY: -Math.cos(a) * 32 };
+    const depth = (z + 1) / 2;
+    const s = (0.6 + 0.5 * depth) * (0.4 + 0.6 * grow);
+    return { i, x, y, z, s, rotY: -Math.cos(a) * 30 };
   });
-  const cardW = 140;
   const draw = (c: (typeof cards)[number], faked: boolean) => {
-    const dx = Math.abs(c.x - face.x);
-    const halfW = (cardW / 2) * c.s;
-    const halfH = ((cardW * 16) / 9 / 2) * c.s;
-    // Behind: with a matte the person covers them for real. Without one (faked) they dim and fade as they cross the head.
-    // In front: fully visible when the card is clear of the face to the side, or its top edge is below the chin.
-    const clearSide = interpolate(dx - halfW - faceRadius * 0.85, [0, 50], [0, 1], CL);
-    const clearBelow = interpolate(c.y - halfH - (face.y + faceRadius), [-40, 10], [0, 1], CL);
-    const vis =
-      c.z < 0
-        ? faked
-          ? interpolate(dx, [radius * 0.15, radius * 0.6], [0, 0.55], CL)
-          : 1
-        : Math.max(clearSide, clearBelow);
+    // Faked behind pass (no matte): back cards dim, blur and fade while they cross the head.
+    const vis = faked && c.z < 0 ? interpolate(Math.abs(c.x - face.x), [radius * 0.15, radius * 0.6], [0, 0.55], CL) : 1;
     return (
       <div
         key={c.i}
@@ -201,25 +196,24 @@ const OrbitBody: React.FC<OrbitProps> = ({
           position: 'absolute',
           left: c.x,
           top: c.y,
-          zIndex: Math.round(c.depth * 100),
           opacity: out * Math.min(1, grow * 2) * vis,
-          filter: faked && c.z < 0 ? 'blur(1.5px) brightness(0.85)' : c.z < 0 ? 'brightness(0.92)' : undefined,
-          transform: `translate(-50%, -50%) perspective(900px) rotateY(${c.rotY}deg) scale(${faked && c.z < 0 ? c.s * 0.85 : c.s})`,
+          filter: faked && c.z < 0 ? 'blur(1.5px) brightness(0.8)' : c.z < 0 ? 'brightness(0.85)' : undefined,
+          transform: `translate(-50%, -50%) perspective(1000px) rotateY(${c.rotY}deg) scale(${faked && c.z < 0 ? c.s * 0.85 : c.s})`,
         }}
       >
-        <PhoneCard i={c.i} image={images.length ? images[c.i % images.length] : undefined} w={cardW} />
+        <PhoneCard i={c.i} image={images.length ? images[c.i % images.length] : undefined} w={cardWidth} />
       </div>
     );
   };
-  const back = cards.filter((c) => c.z < 0);
-  const front = cards.filter((c) => c.z >= 0);
+  // Back to front inside each layer, so nearer cards overlap farther ones.
+  const back = cards.filter((c) => c.z < 0).sort((p, q) => p.z - q.z);
+  const front = cards.filter((c) => c.z >= 0).sort((p, q) => p.z - q.z);
   return (
     <>
       <Talk src={src} trimBefore={trimBefore} />
-      {/* Each layer is its own stacking context, so the cards' depth order never lifts a back card above the matte. */}
-      <AbsoluteFill style={{ isolation: 'isolate' }}>{back.map((c) => draw(c, !matteSrc))}</AbsoluteFill>
+      <AbsoluteFill>{back.map((c) => draw(c, !matteSrc))}</AbsoluteFill>
       {matteSrc ? <Talk src={matteSrc} trimBefore={trimBefore} transparent /> : null}
-      <AbsoluteFill style={{ isolation: 'isolate' }}>{front.map((c) => draw(c, false))}</AbsoluteFill>
+      <AbsoluteFill>{front.map((c) => draw(c, false))}</AbsoluteFill>
     </>
   );
 };

@@ -7,14 +7,14 @@ I made these for my reel "7 video effects Claude made for me". I recorded the li
 ## The effects
 
 1. **Headline Wall**: headline cards fly out from behind your head and float around it.
-2. **Orbit**: your reel thumbnails circle your head. The back half goes behind you, the front half passes under your chin.
+2. **Orbit**: your reel thumbnails circle your head on a tilted ring. The back half rides above your hair and goes behind your head, the front half sweeps low across your chest.
 3. **Digital Zoom**: a punch-in on your face with camera brackets and a blinking REC tag, then back out.
-4. **Spotlight**: the room goes dark and you stay lit.
+4. **Spotlight**: you snap your fingers and the room goes dark, with you still lit, until the end of the line.
 5. **Checklist**: a card in the top corner that ticks off three steps as you say them.
-6. **Freeze and Label**: a white flash, the frame freezes, and a label with an arrow points at you.
+6. **Freeze and Label**: in the pause after a line, a white flash, the frame freezes, and a label with an arrow points at you.
 7. **Before and After**: a wipe with a handle between what you filmed and what came back.
 
-Plus word-by-word captions (active word in yellow), a label pill for "#1 ..." titles, and an extra: a prop or mascot that sits on your open palm and follows your hand.
+Plus word-by-word captions (active word in yellow), a label pill for "#1 ..." titles, sound effects made from scratch (riser, snap, freeze and more, in `public/sfx/`), an optional framed look (your reel in a big card with your name and a "Comment KEYWORD" line), and an extra: a prop or mascot that sits on your open palm and follows your hand.
 
 ## Quick start
 
@@ -28,6 +28,7 @@ npx remotion studio
 The Studio opens with a stand-in person, so you can see every effect before you film anything:
 
 - `MyReel`: the full reel, built from `src/reel/plan.ts`
+- `MyReelFramed`: the same reel in a card on a dark frame
 - `AllEffects`: all seven back to back
 - one composition per effect, to tune its props
 
@@ -83,12 +84,14 @@ The skill file (`skills/claude-video-effects/SKILL.md`) has the whole workflow, 
 | Step | Tool | What it does |
 |---|---|---|
 | Transcribe takes | `tools/transcribe_takes.py` | whisper.cpp transcript of every take, with timestamps |
-| Find cut points | `tools/find_speech.py` | speech islands from the waveform; cut 0.08 s before the first word and 0.10 s after the last |
-| Build the cut | `tools/build_cut.py` | joins the chosen pieces, converts HLG to SDR, cleans and levels the voice to -14 LUFS, writes word timings for the captions |
+| Find cut points | `tools/find_speech.py` | speech islands from the waveform; cut 0.08 s before the first word and 0.10 s after the last; `--snap` finds a finger snap |
+| Clean the voice (optional) | `tools/adobe_join.py` + `tools/adobe_split.py` | all takes in one file for Adobe Podcast Enhance, then split back per take with an alignment check |
+| Build the cut | `tools/build_cut.py` | joins the chosen pieces, adds holds for the freeze, converts HLG to SDR, applies a cool neutral look, levels the voice to -14 LUFS, patches a fluffed word, writes word timings for the captions |
 | Person matte | `tools/make_matte.sh` + `tools/vision/matte.swift` | Apple Vision person segmentation, saved as a webm with alpha; also face boxes per frame |
 | Face per line | `tools/face_centres.py` | the face centre and size each effect needs |
 | Hand tracking | `tools/vision/hands.swift` + `tools/palm_track.py` | Apple Vision hand pose, smoothed into a palm track for the palm prop |
-| Effects | `src/reel/plan.ts` | which effect starts on which word |
+| Effects | `src/reel/plan.ts` | which effect starts on which word, plus the sound effects list |
+| Sound effects | `tools/make_sfx.py` | riser, thud, whoosh, click, snap, power-down, tick, freeze, pop, generated with numpy |
 | QA | `tools/check_render.sh` | length, loudness, true peak, contact sheet, loudness fix if needed |
 
 More in `tools/README.md`.

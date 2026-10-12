@@ -7,5 +7,6 @@ clips/*
 !clips/README.md
 public/*
 !public/README.md
+!public/sfx/
 tools/bin/
 *.log

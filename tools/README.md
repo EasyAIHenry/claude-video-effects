@@ -18,7 +18,9 @@ swiftc -O tools/vision/hands.swift -o tools/bin/hands
 export WHISPER_MODEL=~/whisper.cpp/models/ggml-medium.en.bin
 
 python3 tools/transcribe_takes.py                 # 1. transcript of every take in clips/
-python3 tools/find_speech.py clips/take-01.mp4 0 8  # 2. cut points for a line (0.08 s before, 0.10 s after)
+python3 tools/find_speech.py clips/take-01.mp4 0 8  # 2. cut points for a line (0.08 s before, 0.10 s after); add --snap for the spotlight
+python3 tools/adobe_join.py                       #    optional: one file for Adobe Podcast Enhance, then
+python3 tools/adobe_split.py ~/Downloads/x.mp3    #    split it back per take (sets up work/adobe/enhanced for ENHANCED_DIR)
 # 3. edit TAKES and LINES at the top of tools/build_cut.py
 python3 tools/build_cut.py                        # 4. public/talk.mp4, voice.wav, src/reel/cut.ts, words.ts
 tools/make_matte.sh                               # 5. public/talk_matte.webm, work/matte/faces.jsonl
@@ -33,7 +35,9 @@ tools/check_render.sh out/reel.mp4                # 8. QA
 
 - `transcribe_takes.py`: whisper.cpp on every clip, one `[start - end] text` line per segment.
 - `find_speech.py`: 10 ms RMS against the noise floor; prints speech islands, the suggested in/out points and long pauses to split on.
-- `build_cut.py`: the chosen pieces back to back, picture and voice in sync one to one. Voice chain: high-pass, FFT denoise, -3 dB at 250 Hz, +3 dB at 3 kHz, de-esser, each line levelled to the median, gentle compression, normalised to -14 LUFS. HLG footage is converted to SDR bt709 with VideoToolbox (`HLG = True`). Words come from whisper per piece, snapped to the nearest speech onset.
+- `adobe_join.py` / `adobe_split.py`: every take joined with 1 s of silence into one MP3 plus an offsets file, so Adobe Podcast Enhance (v2 defaults) runs once and every line sounds the same; the split cuts the result back per take, removes the MP3 encoder delay and checks each take lines up within 2 ms by cross-correlation.
+- `make_sfx.py`: the sound effects in `public/sfx/`, generated with numpy. `--riser-seconds` changes the riser length.
+- `build_cut.py`: the chosen pieces back to back, picture and voice in sync one to one. Voice chain: high-pass, FFT denoise, -3 dB at 250 Hz, +3 dB at 3 kHz, de-esser, each line levelled to the median, gentle compression, normalised to -14 LUFS. HLG footage is converted to SDR bt709 with VideoToolbox (`HLG = True`), then lifted. `LOOK = "cool"` (default) adds a cool, neutral grade; warmer grades turned skin yellow in testing. A third number on a piece is a hold: frozen picture, silent voice (for Freeze and Label). `PATCHES` swaps one fluffed word for the same word in your saved voice clone. Words come from whisper per piece, snapped to the nearest speech onset.
 - `make_matte.sh`: Apple Vision person segmentation (accurate) per frame, feathered and attached as alpha to the cut (VP9 webm). Also face boxes per frame.
 - `face_centres.py`: median face centre and size per line.
 - `vision/hands.swift` + `palm_track.py`: Apple Vision hand pose per frame; the palm centre is the mean of the wrist and four knuckles, smoothed over 5 frames. Run it on the cut so the times are reel times.

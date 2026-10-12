@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Find where speech starts and stops inside a window of a take, from the waveform.
 
-usage: python3 tools/find_speech.py <take.mp4|.wav> <from_s> <to_s> [threshold_db]
+usage: python3 tools/find_speech.py <take.mp4|.wav> <from_s> <to_s> [threshold_db] [--snap]
 Prints the speech islands (10 ms RMS above the noise floor + threshold, gaps under 120 ms merged)
 and the suggested cut points: 0.08 s before the first word, 0.10 s after the last word.
+--snap also prints the sharpest attack in the window (a finger snap or a clap) to the millisecond:
+start the Spotlight there. The time is on the take; add the line's start on the reel minus the piece's in point.
 """
 import subprocess
 import sys
@@ -12,8 +14,9 @@ import wave
 
 import numpy as np
 
-p, a, b = sys.argv[1], float(sys.argv[2]), float(sys.argv[3])
-th_db = float(sys.argv[4]) if len(sys.argv) > 4 else 14.0
+argv = [x for x in sys.argv[1:] if x != "--snap"]
+p, a, b = argv[0], float(argv[1]), float(argv[2])
+th_db = float(argv[3]) if len(argv) > 3 else 14.0
 if not p.lower().endswith(".wav"):
     w = tempfile.mktemp(suffix=".wav")
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", p, "-vn", "-ac", "1", "-ar", "48000", w], check=True)
@@ -54,3 +57,13 @@ if merged:
     long = [f"{g0:.2f}-{g1:.2f}" for g0, g1 in gaps if g1 - g0 > 0.45]
     if long:
         print("long pauses (split into pieces here):", ", ".join(long))
+
+if "--snap" in sys.argv:
+    # 2 ms energy of the high band (a snap is a crack of high frequencies); the biggest one-step jump is the attack.
+    h = np.diff(x, prepend=x[0])  # crude high-pass
+    hop2 = sr // 500
+    j0, j1 = int(a * 500), min(len(h) // hop2, int(b * 500))
+    e = 20 * np.log10(np.sqrt((h[j0 * hop2: j1 * hop2].reshape(-1, hop2) ** 2).mean(1)) + 1e-9)
+    jump = np.diff(e, prepend=e[0])
+    k = int(np.argmax(jump))
+    print(f"snap: {(j0 + k) / 500:.3f} s (attack +{jump[k]:.0f} dB in 2 ms)")

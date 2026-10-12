@@ -22,15 +22,17 @@ Headline cards fly out from behind your head and float around it.
 - **Trigger line:** "Everyone's talking about ..." Start on "talking" (or on the topic word).
 - **Props:** `images?: string[]` (headline screenshots; placeholder cards when empty, up to 6), `stagger` (frames between cards, 4), `matteSrc` (set from `cut.ts`).
 - **Tip:** with the matte the cards sit truly behind you. Without it, the slots that would cover your head are dropped. Crop screenshots to about 3:2 so they read at this size.
+- **Sound:** this is usually the hook line. Put a 2.5 s `riser.wav` under its end so it lands on the cut to line 2, with `thud.wav` on the cut.
 - **Filming:** leave space above and beside your head. Don't sit against the wall.
 
 ## 2. Orbit
-Your reel thumbnails circle your head like a ring.
+Your reel thumbnails circle your head on a tilted ring.
 
 - **Trigger line:** "It can spin my reels around my head." Start on "spin".
-- **Props:** `images?` (9:16 thumbnails), `count` (defaults to the number of images, or 6), `radius` (380, half-width of the ring), `tilt` (250, how far the ring dips in front), `ringOffset` (60, ring centre below the face centre), `speed` (0.22 turns per second), `faceRadius` (150).
-- **Tip:** cards go behind your head using the matte and pass below your chin in front, never over your face. Set `faceRadius` from `face_centres.py` (it prints one per line): front cards fade out while they overlap that circle. If your face is large in frame, raise `radius` and `tilt` together.
-- **Filming:** leave about a head-width of space on each side of your head.
+- **Props:** `images?` (9:16 thumbnails), `count` (images, or 7), `radius` (430, half-width of the ring), `tilt` (430, how far the ring tips toward the camera), `ringOffset` (-30, ring centre relative to the face centre), `speed` (0.3 turns per second), `cardWidth` (165).
+- **How it moves:** the back half rides above the hair and passes behind the head (the matte covers it); the front half sweeps low across the chest. With tilt about equal to radius no card ever reaches the face, so cards never fade out mid-path. Captions for this line sit low (y 1560), below the ring.
+- **Tip:** if the face is large in frame, raise `radius` and `tilt` together. If the back cards poke out of the top of the frame, lower `tilt` a little or move `ringOffset` down.
+- **Filming:** leave about a head-width of space on each side of your head and some space above it.
 
 ## 3. Digital Zoom
 A punch-in toward your face with camera brackets and a blinking REC tag, then back out.
@@ -43,9 +45,10 @@ A punch-in toward your face with camera brackets and a blinking REC tag, then ba
 ## 4. Spotlight
 The room goes dark and you stay lit.
 
-- **Trigger line:** "Just kill the lights." Snap your fingers on "lights" and start the effect on the snap.
-- **Props:** `darkness` (0.8), `radius` (300), `centre?` (defaults to just below the face), `matteSrc`.
-- **Tip:** find the snap in the waveform (`tools/find_speech.py` shows it as a short island) and start 1 frame before it. The matte keeps you fully lit with no halo. Without a matte it falls back to a soft vignette.
+- **Trigger:** a finger snap, not a word. Line: "If you want one line to hit, just kill the lights." Snap on "lights". `tools/find_speech.py <take> <from> <to> --snap` prints the snap to the millisecond; `at` = that time on the reel. `to` = the end of the line: it stays dark until the cut.
+- **Props:** `darkness` (0.84), `radius` (300), `centre?` (defaults to just below the face), `inFrames` (4: the lights go off fast), `outFrames` (6), `matteSrc`.
+- **Sound:** `snap.wav` 1 frame before (or the real snap if it is loud enough) and `powerdown.wav` on the snap.
+- **Tip:** the matte keeps you fully lit with no halo. Without a matte it falls back to a soft vignette.
 - **Filming:** snap close to your chest so the mic catches it.
 
 ## 5. Checklist
@@ -57,12 +60,14 @@ A dark card top left with three items that tick as you say them.
 - **Filming:** say the items in the same order as the card, with a small beat between them.
 
 ## 6. Freeze and Label
-A white flash, the picture freezes, and a yellow label with an arrow points at you.
+A white flash, the picture freezes in a real pause, a yellow label with an arrow points at you, then the line carries on.
 
-- **Trigger line:** any line with a natural pause, e.g. "And I'm saying this as someone who can't really edit." Freeze on the paused frame.
-- **Props:** `text` (2 or 3 words), `freezeAt` (reel seconds), `target?` (arrow tip, defaults beside the face), `labelAt?`, `saturation` (0.55 while frozen).
-- **Tip:** freeze on a frame where your eyes are open and your mouth is closed. Step through a few frames around the pause with `remotion still` to pick it. The arrow tip goes beside your face, not on it.
-- **Filming:** pause for half a second and hold still.
+- **Trigger:** the pause after a line, e.g. "And I'm saying this as someone who can't really edit." (pause) "This is the freeze and label."
+- **How:** in `build_cut.py` give the piece that ends on the pause a hold: `[60.72, 62.97, 1.0]` holds 1.0 s. The picture holds that piece's last frame and the voice is silent, and `cut.ts` lists the hold. In `plan.ts` set `freezeAt` = hold start and `unfreezeAt` = hold end.
+- **Props:** `text` (2 or 3 words), `freezeAt`, `unfreezeAt`, `target?` (arrow tip, defaults beside the face), `labelAt?`, `saturation` (0.55 while frozen).
+- **Sound:** `freeze.wav` 0.7 s before `freezeAt`: it swells and hits on the freeze.
+- **Tip:** cut the piece so its last frame has open eyes and a closed mouth (step a frame or two either way). The arrow tip goes beside the face, not on it.
+- **Filming:** after the line, pause for half a second or more and hold still.
 
 ## 7. Before and After
 A vertical wipe with a round handle between two versions of the same moment.

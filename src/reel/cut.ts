@@ -1,6 +1,6 @@
 // The cut: written by tools/build_cut.py. Until you run it, the reel uses the stand-in person.
 // All times are seconds on the reel timeline.
-export type CutLine = { id: string; start: number; end: number; text: string; fx: string };
+export type CutLine = { id: string; start: number; end: number; text: string; fx: string; /** [start, end] of each hold (frozen picture, silent voice) */ holds?: [number, number][] };
 export type Cut = {
   /** The cut picture in public/ (1080x1920, 30 fps), or 'stand-in'. */
   video: string;

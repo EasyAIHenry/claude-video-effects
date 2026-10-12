@@ -110,18 +110,24 @@ export type SpotlightProps = EffectBase & {
   radius?: number;
   /** Optional spot centre; defaults to slightly below the face so the chest is lit too. */
   centre?: Pt;
-  /** Person matte (webm with alpha, same timing). With it the room darkens and he stays fully lit. */
+  /** Person matte (webm with alpha, same timing). With it the room darkens and the person stays fully lit. */
   matteSrc?: string;
+  /** Frames for the lights to go off. Short, because it lands on a finger snap. */
+  inFrames?: number;
+  /** Frames for the lights to come back at the end (the effect holds dark to the end of the line). */
+  outFrames?: number;
 };
-const SpotBody: React.FC<SpotlightProps> = ({ src, trimBefore, duration, face = DEFAULT_FACE, darkness = 0.8, radius = 300, centre, matteSrc }) => {
+/**
+ * Start it on the finger snap (tools/find_speech.py --snap finds it), not on a word, and run it to the end of the line.
+ * Pair it with a snap SFX 1 frame before the start (public/sfx/snap.wav from tools/make_sfx.py).
+ */
+const SpotBody: React.FC<SpotlightProps> = ({ src, trimBefore, duration, face = DEFAULT_FACE, darkness = 0.84, radius = 300, centre, matteSrc, inFrames = 4, outFrames = 6 }) => {
   const f = useCurrentFrame();
   const k = Math.min(
-    interpolate(f, [0, 14], [0, 1], { ...CL, easing: EASE }),
-    interpolate(f, [duration - 14, duration], [1, 0], { ...CL, easing: EASE }),
+    interpolate(f, [0, inFrames], [0, 1], { ...CL, easing: EASE }),
+    interpolate(f, [duration - outFrames, duration], [1, 0], CL),
   );
   const c = centre ?? { x: face.x, y: face.y + 160 };
-  // Spot also closes slightly as it fades in, like a light being focused.
-  const r = radius * interpolate(k, [0, 1], [1.5, 1]);
   return (
     <>
       <Talk src={src} trimBefore={trimBefore} />
@@ -129,12 +135,18 @@ const SpotBody: React.FC<SpotlightProps> = ({ src, trimBefore, duration, face = 
         style={{
           opacity: k,
           // long, smooth falloff (many stops) so there is no visible edge or ring
-          background: `radial-gradient(ellipse ${r * 1.5}px ${r * 2.2}px at ${c.x}px ${c.y}px, ${[0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, 1]
-            .map((t) => `rgba(0,0,0,${(darkness * (matteSrc ? 0.7 + 0.3 * t : 0.9 * t * t * (3 - 2 * t))).toFixed(3)}) ${Math.round(t * 100)}%`)
+          background: `radial-gradient(ellipse ${radius * 1.5}px ${radius * 2.2}px at ${c.x}px ${c.y}px, ${[0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, 1]
+            .map((t) => `rgba(0,0,0,${(darkness * (matteSrc ? 0.42 + 0.58 * t : 0.9 * t * t * (3 - 2 * t))).toFixed(3)}) ${Math.round(t * 100)}%`)
             .join(', ')})`,
         }}
       />
-      {matteSrc ? <Talk src={matteSrc} trimBefore={trimBefore} transparent style={{ opacity: k }} /> : null}
+      {matteSrc ? (
+        <>
+          <Talk src={matteSrc} trimBefore={trimBefore} transparent style={{ opacity: k }} />
+          {/* a soft vignette over everything, so the lit person still sits in the dark room */}
+          <AbsoluteFill style={{ opacity: k, background: `radial-gradient(40% 30% at ${(c.x / 10.8).toFixed(1)}% ${(c.y / 19.2).toFixed(1)}%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.35) 100%)` }} />
+        </>
+      ) : null}
     </>
   );
 };
@@ -239,8 +251,10 @@ export const Checklist: React.FC<ChecklistProps> = (p) => (
 export type FreezeAndLabelProps = EffectBase & {
   /** Label text next to the arrow. */
   text: string;
-  /** Local frame the picture freezes on (it stays frozen for the rest of the effect). */
+  /** Local frame the picture freezes on. Best: the first frame of a hold gap the cut builder inserted after the line. */
   freezeAt?: number;
+  /** Local frame the picture moves again (the end of the hold). Default: stays frozen to the end of the effect. */
+  unfreezeAt?: number;
   /** Point the arrow tip touches. Defaults to just right of the face. */
   target?: Pt;
   /** Where the label box sits (its centre). */
@@ -248,10 +262,13 @@ export type FreezeAndLabelProps = EffectBase & {
   /** Saturation while frozen (1 = untouched). */
   saturation?: number;
 };
-const FreezeBody: React.FC<FreezeAndLabelProps> = ({ src, trimBefore = 0, duration, face = DEFAULT_FACE, text, freezeAt = 0, target, labelAt, saturation = 0.55 }) => {
+const FreezeBody: React.FC<FreezeAndLabelProps> = ({ src, trimBefore = 0, duration, face = DEFAULT_FACE, text, freezeAt = 0, unfreezeAt, target, labelAt, saturation = 0.55 }) => {
   const f = useCurrentFrame();
-  const frozen = f >= freezeAt;
-  const k = interpolate(f, [freezeAt, freezeAt + 8], [0, 1], { ...CL, easing: EASE });
+  const frozen = f >= freezeAt && (unfreezeAt === undefined || f < unfreezeAt);
+  const k = Math.min(
+    interpolate(f, [freezeAt, freezeAt + 8], [0, 1], { ...CL, easing: EASE }),
+    unfreezeAt === undefined ? 1 : interpolate(f, [unfreezeAt, unfreezeAt + 4], [1, 0], CL),
+  );
   const out = interpolate(f, [duration - 8, duration], [1, 0], CL);
   const flash = interpolate(f, [freezeAt, freezeAt + 2, freezeAt + 7], [0, 0.55, 0], CL);
   const tip = target ?? { x: face.x + 250, y: face.y + 120 };

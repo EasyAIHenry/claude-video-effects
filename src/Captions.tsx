@@ -11,8 +11,8 @@ export type CaptionsProps = {
   offsetSec?: number;
   /** Max words on screen at once. */
   maxWords?: number;
-  /** Vertical centre of the caption line (chest area). */
-  y?: number;
+  /** Vertical centre of the caption line (chest area), or a function of the time in seconds (to move it for one line). */
+  y?: number | ((t: number) => number);
   fontSize?: number;
 };
 
@@ -53,7 +53,7 @@ export const Captions: React.FC<CaptionsProps> = ({ words, offsetSec = 0, maxWor
           position: 'absolute',
           left: SAFE.l,
           width: SAFE.r - SAFE.l,
-          top: y,
+          top: typeof y === 'function' ? y(t) : y,
           transform: `translateY(-50%) scale(${pop})`,
           textAlign: 'center',
           fontFamily: FONT,
